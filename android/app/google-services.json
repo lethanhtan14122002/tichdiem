@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "401330251413",
+    "project_id": "vicvo-a545b",
+    "storage_bucket": "vicvo-a545b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:401330251413:android:8ef752f0c981effcd31d9c",
+        "android_client_info": {
+          "package_name": "com.example.vic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAORR8ysawJhMToswbyet5fTlYf8TWh6T4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
