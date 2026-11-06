@@ -14,20 +14,60 @@ class LoyaltyCardScreen extends StatefulWidget {
   State<LoyaltyCardScreen> createState() => _LoyaltyCardScreenState();
 }
 
-class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
+class _LoyaltyCardScreenState extends State<LoyaltyCardScreen>
+    with TickerProviderStateMixin {
   // Thay bằng thông tin demo của bạn tại máy.
-  static const String _demoUsername = 'a';
-  static const String _demoPassword = 'a';
+  static const String _demoUsername = 'YOUR_DEMO_USERNAME';
+  static const String _demoPassword = 'YOUR_DEMO_PASSWORD';
+
+  late final AnimationController _introController;
+  late final AnimationController _ambientController;
+  late final Animation<double> _introOpacity;
+  late final Animation<Offset> _introSlide;
 
   bool _isSavingPoint = false;
   bool _isLoggedIn = false;
 
   CustomerModel customer = const CustomerModel(
-    id: 'Tan2412',
-    name: 'Lê Thanh Tân',
-    phone: '0364273884',
+    id: 'VIC001',
+    name: 'Khách hàng',
+    phone: '',
     points: 25,
   );
+
+  @override
+  void initState() {
+    super.initState();
+
+    _introController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    _introOpacity = CurvedAnimation(
+      parent: _introController,
+      curve: Curves.easeOutCubic,
+    );
+
+    _introSlide = Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _introController, curve: Curves.easeOutCubic),
+        );
+
+    _introController.forward();
+
+    _ambientController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 5),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _introController.dispose();
+    _ambientController.dispose();
+    super.dispose();
+  }
 
   Future<void> _addPoint() async {
     if (_isSavingPoint) return;
@@ -159,18 +199,44 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
             ),
           ),
 
-          // Ánh sáng trang trí phía trên
-          const Positioned(
+          // Vòng sáng phía trên trôi nhẹ
+          Positioned(
             top: -65,
             right: -55,
-            child: _BackgroundCircle(size: 230, color: Color(0x453DABAE)),
+            child: AnimatedBuilder(
+              animation: _ambientController,
+              builder: (context, child) {
+                final t = _ambientController.value;
+                return Transform.translate(
+                  offset: Offset(0, 10 * (2 * t - 1)),
+                  child: child,
+                );
+              },
+              child: const _BackgroundCircle(
+                size: 230,
+                color: Color(0x453DABAE),
+              ),
+            ),
           ),
 
-          // Ánh sáng phía dưới
-          const Positioned(
+          // Vòng sáng phía dưới trôi ngược chiều
+          Positioned(
             bottom: 80,
             left: -85,
-            child: _BackgroundCircle(size: 250, color: Color(0x354A9BBD)),
+            child: AnimatedBuilder(
+              animation: _ambientController,
+              builder: (context, child) {
+                final t = _ambientController.value;
+                return Transform.translate(
+                  offset: Offset(0, -12 * (2 * t - 1)),
+                  child: child,
+                );
+              },
+              child: const _BackgroundCircle(
+                size: 250,
+                color: Color(0x354A9BBD),
+              ),
+            ),
           ),
 
           // Cây trang trí
@@ -190,208 +256,258 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
             ),
           ),
 
+          // Nội dung trượt lên và hiện dần khi mở màn hình
           SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isWide = constraints.maxWidth > 750;
+            child: FadeTransition(
+              opacity: _introOpacity,
+              child: SlideTransition(
+                position: _introSlide,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final isWide = constraints.maxWidth > 750;
 
-                return SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isWide ? 40 : 20,
-                    vertical: 25,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 900),
-                      child: Column(
-                        children: [
-                          // Logo VIC
-                          const Icon(
-                            Icons.eco_rounded,
-                            color: Color(0xFF16856D),
-                            size: 38,
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          const Text(
-                            'VIC',
-                            style: TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 7,
-                              color: Color(0xFF12477F),
-                            ),
-                          ),
-
-                          const SizedBox(height: 4),
-
-                          const Text(
-                            'KHÁCH HÀNG THÂN THIẾT',
-                            style: TextStyle(
-                              color: Color(0xFF527A9F),
-                              fontSize: 11,
-                              letterSpacing: 3,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Nút tìm kiếm khách hàng
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _openSearchPage,
-                              icon: const Icon(Icons.search_rounded),
-                              label: const Text('Tìm kiếm khách hàng'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF16856D),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 15,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                textStyle: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 28),
-
-                          // Hai mặt thẻ
-                          if (isWide)
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: LoyaltyCardFront(customer: customer),
-                                ),
-                                const SizedBox(width: 18),
-                                Expanded(
-                                  child: LoyaltyCardBack(
-                                    points: customer.points,
-                                  ),
-                                ),
-                              ],
-                            )
-                          else ...[
-                            LoyaltyCardFront(customer: customer),
-                            const SizedBox(height: 22),
-                            LoyaltyCardBack(points: customer.points),
-                          ],
-
-                          const SizedBox(height: 28),
-
-                          // Lời tri ân
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 17,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.75),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(
-                                    0xFF315F80,
-                                  ).withValues(alpha: 0.07),
-                                  blurRadius: 15,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: const Column(
-                              children: [
-                                Text(
-                                  '💙 CẢM ƠN BẠN ĐÃ ĐỒNG HÀNH',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Color(0xFF174B7C),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(height: 7),
-                                Text(
-                                  'Mỗi điểm thưởng là một lời tri ân từ VIC.',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Color(0xFF65809B),
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 20),
-
-                          const Text(
-                            'VIC • LOYALTY PROGRAM',
-                            style: TextStyle(
-                              color: Color(0xFF65809B),
-                              fontSize: 10,
-                              letterSpacing: 2,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-
-                          const SizedBox(height: 18),
-
-                          // Nút đăng nhập / đăng xuất ở cuối trang
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: _isLoggedIn
-                                  ? _logout
-                                  : _showLoginDialog,
-                              icon: Icon(
-                                _isLoggedIn
-                                    ? Icons.logout_rounded
-                                    : Icons.login_rounded,
-                              ),
-                              label: Text(
-                                _isLoggedIn
-                                    ? 'Đăng xuất'
-                                    : 'Đăng nhập tài khoản',
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF12477F),
-                                side: const BorderSide(
-                                  color: Color(0xFF16856D),
-                                  width: 1.5,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                textStyle: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                    return SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isWide ? 40 : 20,
+                        vertical: 25,
                       ),
-                    ),
-                  ),
-                );
-              },
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 900),
+                          child: Column(
+                            children: [
+                              // Logo VIC
+                              const Icon(
+                                Icons.eco_rounded,
+                                color: Color(0xFF16856D),
+                                size: 38,
+                              ),
+
+                              const SizedBox(height: 8),
+
+                              const Text(
+                                'VIC',
+                                style: TextStyle(
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 7,
+                                  color: Color(0xFF12477F),
+                                ),
+                              ),
+
+                              const SizedBox(height: 4),
+
+                              const Text(
+                                'KHÁCH HÀNG THÂN THIẾT',
+                                style: TextStyle(
+                                  color: Color(0xFF527A9F),
+                                  fontSize: 11,
+                                  letterSpacing: 3,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // Nút tìm kiếm khách hàng
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _openSearchPage,
+                                  icon: const Icon(Icons.search_rounded),
+                                  label: const Text('Tìm kiếm khách hàng'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF16856D),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 15,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 28),
+
+                              // Thẻ hiện hiệu ứng khi khách hàng hoặc điểm thay đổi
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 450),
+                                switchInCurve: Curves.easeOutBack,
+                                switchOutCurve: Curves.easeIn,
+                                transitionBuilder: (child, animation) {
+                                  final scale =
+                                      Tween<double>(
+                                        begin: 0.96,
+                                        end: 1,
+                                      ).animate(
+                                        CurvedAnimation(
+                                          parent: animation,
+                                          curve: Curves.easeOutBack,
+                                        ),
+                                      );
+
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: ScaleTransition(
+                                      scale: scale,
+                                      child: child,
+                                    ),
+                                  );
+                                },
+                                child: KeyedSubtree(
+                                  key: ValueKey<int>(
+                                    Object.hash(
+                                      customer.id,
+                                      customer.points,
+                                      isWide,
+                                    ),
+                                  ),
+                                  child: isWide
+                                      ? Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              child: LoyaltyCardFront(
+                                                customer: customer,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 18),
+                                            Expanded(
+                                              child: LoyaltyCardBack(
+                                                points: customer.points,
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      : Column(
+                                          children: [
+                                            LoyaltyCardFront(
+                                              customer: customer,
+                                            ),
+                                            const SizedBox(height: 22),
+                                            LoyaltyCardBack(
+                                              points: customer.points,
+                                            ),
+                                          ],
+                                        ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 28),
+
+                              // Lời tri ân
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 17,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.75),
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(
+                                        0xFF315F80,
+                                      ).withValues(alpha: 0.07),
+                                      blurRadius: 15,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: const Column(
+                                  children: [
+                                    Text(
+                                      '💙 CẢM ƠN BẠN ĐÃ ĐỒNG HÀNH',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Color(0xFF174B7C),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 7),
+                                    Text(
+                                      'Mỗi điểm thưởng là một lời tri ân từ VIC.',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Color(0xFF65809B),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 20),
+
+                              const Text(
+                                'VIC • LOYALTY PROGRAM',
+                                style: TextStyle(
+                                  color: Color(0xFF65809B),
+                                  fontSize: 10,
+                                  letterSpacing: 2,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+
+                              const SizedBox(height: 18),
+
+                              // Nút đăng nhập / đăng xuất
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: _isLoggedIn
+                                      ? _logout
+                                      : _showLoginDialog,
+                                  icon: Icon(
+                                    _isLoggedIn
+                                        ? Icons.logout_rounded
+                                        : Icons.login_rounded,
+                                  ),
+                                  label: Text(
+                                    _isLoggedIn
+                                        ? 'Đăng xuất'
+                                        : 'Đăng nhập tài khoản',
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF12477F),
+                                    side: const BorderSide(
+                                      color: Color(0xFF16856D),
+                                      width: 1.5,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
         ],
@@ -400,7 +516,7 @@ class _LoyaltyCardScreenState extends State<LoyaltyCardScreen> {
   }
 }
 
-// Hộp thoại tự sở hữu và dispose controller
+// Hộp thoại đăng nhập tự quản lý controller và bật lên bằng hiệu ứng scale
 class _LoginDialog extends StatefulWidget {
   const _LoginDialog();
 
@@ -428,39 +544,47 @@ class _LoginDialogState extends State<_LoginDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Đăng nhập'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _usernameController,
-            autofocus: true,
-            textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(
-              labelText: 'Tài khoản',
-              prefixIcon: Icon(Icons.person_outline),
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.94, end: 1.0),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutBack,
+      builder: (context, scale, child) {
+        return Transform.scale(scale: scale, child: child);
+      },
+      child: AlertDialog(
+        title: const Text('Đăng nhập'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _usernameController,
+              autofocus: true,
+              textInputAction: TextInputAction.next,
+              decoration: const InputDecoration(
+                labelText: 'Tài khoản',
+                prefixIcon: Icon(Icons.person_outline),
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _passwordController,
-            obscureText: true,
-            onSubmitted: (_) => _submit(),
-            decoration: const InputDecoration(
-              labelText: 'Mật khẩu',
-              prefixIcon: Icon(Icons.lock_outline),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              onSubmitted: (_) => _submit(),
+              decoration: const InputDecoration(
+                labelText: 'Mật khẩu',
+                prefixIcon: Icon(Icons.lock_outline),
+              ),
             ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Hủy'),
           ),
+          ElevatedButton(onPressed: _submit, child: const Text('Đăng nhập')),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Hủy'),
-        ),
-        ElevatedButton(onPressed: _submit, child: const Text('Đăng nhập')),
-      ],
     );
   }
 }
